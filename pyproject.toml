@@ -1,0 +1,23 @@
+[project]
+name = "finpilot-ai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Dhruv Bhatt", email = "dhruvbhatt938@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.161.1",
+]
+
+[project.scripts]
+finpilot-ai = "app:main"
+
+[tool.uv.build-backend]
+module-name = "app"
+module-root = "backend/src"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"   
