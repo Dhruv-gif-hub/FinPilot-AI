@@ -2,8 +2,8 @@ from datetime import datetime
 from uuid import UUID
 
 from pgvector.sqlalchemy import VECTOR
-from sqlalchemy import BigInteger, Computed, ForeignKey, Index, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
+from sqlalchemy import BigInteger, Computed, ForeignKey, Index, Text, func, DateTime
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .user import Base
@@ -23,7 +23,8 @@ class DocumentChunk(Base):
         Computed("to_tsvector('english', content)", persisted=True),
         index=False
         )
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
+                                                 server_default=func.now())
 
     __table_args__ = (
             Index(
@@ -38,5 +39,5 @@ class DocumentChunk(Base):
             "search_vector",
             postgresql_using="gin"
         ),
-            {"schema": "knowbase-ai"},
+            {"schema": "FinPilot-AI"},
         )

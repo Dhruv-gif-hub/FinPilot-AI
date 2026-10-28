@@ -1,7 +1,7 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from ...models.object_models.pdf_chunks import PDFChunks
-from ...models.object_models.pdf_extracts import PDFExtracts
+from ...schemas.pdf_chunks import PDFChunks
+from ...schemas.pdf_extracts import PDFExtracts
 
 
 def chunk_pages(pages: PDFExtracts, chunk_size: int = 1000, chunk_overlap: int = 200) -> list[PDFChunks]:

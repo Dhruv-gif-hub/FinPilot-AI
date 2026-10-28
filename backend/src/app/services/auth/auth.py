@@ -9,9 +9,9 @@ from app.core.redis import redis_client
 
 from ...core.config import config_value
 from ...core.security import create_access_token, create_refresh_token
-from ...models.object_models.auth_model import Token
-from ...models.object_models.login_model import LoginRequest
-from ...models.object_models.user import signupUser
+from ...schemas.auth_model import Token
+from ...schemas.login_model import LoginRequest
+from ...schemas.user import signupUser
 from ..User.UserService import UserService
 from .password import password_hash, verify_password
 

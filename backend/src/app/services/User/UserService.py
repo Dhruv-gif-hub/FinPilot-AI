@@ -5,7 +5,7 @@ from fastapi import Depends
 from redis.asyncio import Redis
 
 from ...core.dependencies import get_redis, get_user_repo
-from ...models.object_models.user import signupUser
+from ...schemas.user import signupUser
 from .UserFacade import UserRepository
 
 

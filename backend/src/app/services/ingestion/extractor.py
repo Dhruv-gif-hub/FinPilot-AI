@@ -1,7 +1,7 @@
 import pymupdf
 from fastapi import HTTPException, UploadFile
 
-from ...models.object_models.pdf_extracts import PDF_data
+from ...schemas.pdf_extracts import PDF_data
 
 MAX_FILE_SIZE = 50 * 1024 * 1024
 

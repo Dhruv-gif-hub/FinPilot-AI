@@ -8,7 +8,7 @@ from jwt.exceptions import InvalidTokenError
 
 from app.core.redis import redis_client
 
-from ..models.object_models.auth_model import TokenData
+from ..schemas.auth_model import TokenData
 from ..services.User.UserService import UserService
 from .config import config_value
 

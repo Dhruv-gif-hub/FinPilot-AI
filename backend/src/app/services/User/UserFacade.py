@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...db.db_instance import get_db
-from ...models.object_models.user import signupUser
+from ...schemas.user import signupUser
 from ...models.user import User
 from ...services.auth.password import get_password_hash
 

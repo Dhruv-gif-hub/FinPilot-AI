@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     Database_url : str = "asijbg"
     host="localhost"
     port=6379
+    tavily_api_key: str
     REDIS_CACHE_DB: int = 0
     REDIS_BROKER_DB: int = 1
     REDIS_RESULT_DB: int = 2

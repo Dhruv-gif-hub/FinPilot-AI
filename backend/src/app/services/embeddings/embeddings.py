@@ -1,7 +1,7 @@
 from numpy import ndarray
 from sentence_transformers import SentenceTransformer
 
-from ...models.object_models.pdf_chunks import PDFChunks
+from ...schemas.pdf_chunks import PDFChunks
 
 embed_model = SentenceTransformer("BAAI/bge-small-en-v1.5")
 
