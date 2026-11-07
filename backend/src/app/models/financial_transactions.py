@@ -27,7 +27,7 @@ class FinancialTransactions(Base):
                                      primary_key=True,  server_default=func.gen_random_uuid())
     merchant_id: Mapped[UUID] = mapped_column(Uuid,
                                               ForeignKey("FinPilot-AI.merchants.id"),
-                                                  unique=True, nullable=False)
+                                                  nullable=False)
     provider: Mapped[str] = mapped_column(String(40), nullable=False)
     provider_payment_id: Mapped[str] = mapped_column(String(150), nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(precision=18, scale=2), nullable=False)

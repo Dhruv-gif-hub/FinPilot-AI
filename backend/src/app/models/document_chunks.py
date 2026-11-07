@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from pgvector.sqlalchemy import VECTOR
-from sqlalchemy import BigInteger, Computed, ForeignKey, Index, Text, func, DateTime
+from sqlalchemy import BigInteger, Computed, DateTime, ForeignKey, Index, Text, func
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column
 

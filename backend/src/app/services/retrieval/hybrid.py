@@ -24,8 +24,8 @@ async def hybrid_retrieve_chunks(session: AsyncSession, user_id : UUID,
                  .order_by(rank.desc())
                  .limit(20)
                  )
-    bm25_rows = (await session.scalars(bm25_stmt)).all()
-    bm25_rank = {row.id: i+1 for i, row in enumerate(bm25_rows)}
+    bm25_rows = (await session.execute(bm25_stmt)).all()
+    bm25_rank = {row[0].id: i+1 for i, row in enumerate(bm25_rows)}
     all_ids = set(row_rank) | set(bm25_rank)
     scores = {
         cid: 1/(k + row_rank.get(cid, 1000)) + 1/(k + bm25_rank.get(cid, 1000))

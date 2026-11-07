@@ -25,67 +25,37 @@ class AgentToolEvent(Base):
     id: Mapped[UUID] = mapped_column(Uuid,
                                         primary_key=True,  server_default=func.gen_random_uuid())
 
-    run_id: Mapped[UUID] = mapped_column(
-        Uuid,
-        ForeignKey("FinPilot-AI.agent_runs.id"),
-        nullable=False,
-    )
+    run_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("FinPilot-AI.agent_runs.id"),
+        nullable=False,)
 
     # Parent task
-    task_id: Mapped[UUID] = mapped_column(
-        Uuid,
-        ForeignKey("FinPilot-AI.agent_tasks.id"),
-        nullable=False,
-    )
-
+    task_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("FinPilot-AI.agent_tasks.id"),
+        nullable=False,)
+    
     # Sequence number within the run
-    event_sequence: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-    )
+    event_sequence: Mapped[int] = mapped_column(Integer,nullable=False,)
 
     # Tool invoked
-    tool_name: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-    )
+    tool_name: Mapped[str] = mapped_column(String(100), nullable=False,)
 
     # started, succeeded, failed
-    status: Mapped[Status] = mapped_column(
-        String(20),
-        nullable=False,
-    )
+    status: Mapped[Status] = mapped_column(String(20), nullable=False,)
 
     # Redacted, bounded tool arguments
-    input_summary: Mapped[dict | None] = mapped_column(
-        JSONB,
-        nullable=True,
-    )
+    input_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True,)
 
     # Redacted, bounded tool result
-    output_summary: Mapped[dict | None] = mapped_column(
-        JSONB,
-        nullable=True,
-    )
+    output_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True,)
 
     # Sanitized error category
-    error_code: Mapped[str | None] = mapped_column(
-        String(80),
-        nullable=True,
-    )
+    error_code: Mapped[str | None] = mapped_column(String(80), nullable=True,)
 
     # Tool duration in milliseconds
-    duration_ms: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True,
-    )
+    duration_ms: Mapped[int | None] = mapped_column( Integer, nullable=True,)
 
     # Event creation time
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now(),
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False,
+                                                 server_default=func.now(),)
 
     __table_args__ = (
         # One sequence number per run

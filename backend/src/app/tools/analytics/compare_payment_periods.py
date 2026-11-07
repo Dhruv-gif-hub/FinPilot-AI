@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 
 from langchain.tools import ToolRuntime, tool
@@ -12,10 +12,10 @@ from ..helper_functions.analytics.compare_metrics import compare_rates
 @tool
 async def compare_payment_periods(
     merchant_id: UUID,
-    start_date: date,
-    end_date: date,
-    compare_period_start_date: date,
-    compare_period_end_date: date,
+    start_date: datetime,
+    end_date: datetime,
+    compare_period_start_date: datetime,
+    compare_period_end_date: datetime,
     runtime: ToolRuntime[UserContext]
 ):
     """

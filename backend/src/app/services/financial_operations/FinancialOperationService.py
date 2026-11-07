@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 
 from ...db.session import Session_local
@@ -11,8 +11,8 @@ class FinancialOperationService:
     async def get_transactions_for_reconciliation(
         merchant_id: UUID,
         user_id: UUID,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
     ):
         async with Session_local() as session:
             return await FinancialOperationRepo.get_transactions_for_reconciliation(
@@ -24,8 +24,8 @@ class FinancialOperationService:
     async def get_settlement_items_for_reconciliation(
         merchant_id: UUID,
         user_id: UUID,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
     ):
         async with Session_local() as session:
             return await FinancialOperationRepo.get_settlement_items_for_reconciliation(

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import exists, select
@@ -17,8 +17,8 @@ class FinancialOperationRepo:
         session: AsyncSession,
         merchant_id: UUID,
         user_id: UUID,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
     ) -> list[FinancialTransactions]:
         
         merchant_access = exists().where(
@@ -44,8 +44,8 @@ class FinancialOperationRepo:
         session: AsyncSession,
         merchant_id: UUID,
         user_id: UUID,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
     ) -> list[SettlementItem]:
         
         merchant_access = exists().where(

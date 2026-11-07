@@ -1,5 +1,4 @@
-from datetime import date
-from decimal import Decimal
+from datetime import datetime
 from uuid import UUID
 
 from langchain.tools import ToolRuntime, tool
@@ -12,8 +11,8 @@ from ..helper_functions.analytics.analytics_functions import calculate_payment_m
 @tool
 async def get_payment_metrics(
         merchant_id: UUID,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
         runtime: ToolRuntime[UserContext]
         ):
     

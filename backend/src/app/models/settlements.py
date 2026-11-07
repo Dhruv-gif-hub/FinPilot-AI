@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Numeric,
     String,
+    UniqueConstraint,
     Uuid,
     func,
     text,
@@ -26,9 +27,9 @@ class Settlement(Base):
                                      primary_key=True,  server_default=func.gen_random_uuid())
     merchant_id: Mapped[UUID] = mapped_column(Uuid,
                                               ForeignKey("FinPilot-AI.merchants.id"),
-                                                      unique=True, nullable=False)
+                                                      nullable=False)
 
-    provider: Mapped[str] = mapped_column(String(40), unique=True, nullable=False)
+    provider: Mapped[str] = mapped_column(String(40), nullable=False)
     provider_settlement_id: Mapped[str] = mapped_column(String(150), nullable=False,)
 
     currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
@@ -51,7 +52,13 @@ class Settlement(Base):
                                                  server_default=func.now())
 
     __table_args__ = (
-        CheckConstraint(
+        UniqueConstraint(
+            "merchant_id",
+            "provider",
+            "provider_settlement_id",
+            name="uq_settlements_merchant_provider_settlement",
+        ),
+                CheckConstraint(
             "gross_amount >= 0",
             name="ck_settlements_gross_amount_nonnegative",
         ),

@@ -19,7 +19,7 @@ class DocumentRetrieval:
 
     @staticmethod
     async def hybrid_retrieve(session: AsyncSession, user_id : UUID, query: str,
-                              rows: list[DocumentChunk]):
+                              rows: Sequence[DocumentChunk]):
         return await hybrid_retrieve_chunks(session = session, user_id = user_id, 
                                       query = query, rows = rows)
 

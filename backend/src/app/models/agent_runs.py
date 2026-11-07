@@ -26,7 +26,7 @@ class AgentRuns(Base):
                                      primary_key=True,  server_default=func.gen_random_uuid())
     task_id: Mapped[UUID] = mapped_column(Uuid,
                                           ForeignKey("FinPilot-AI.agent_tasks.id"),
-                                          unique=True, nullable=False)
+                                          nullable=False)
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[Status] = mapped_column(String(50), nullable=False,
                                                     default=Status.QUEUED)

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 from uuid import UUID
 
@@ -8,10 +8,10 @@ from ....services.analytics.analytics_service import analytics_service
 async def failure_breakdown(
     merchant_id: UUID,
     user_id: UUID,
-    previous_start: date,
-    previous_end: date,
-    current_start: date,
-    current_end: date
+    previous_start: datetime,
+    previous_end: datetime,
+    current_start: datetime,
+    current_end: datetime
 ) -> dict:
     # Query both periods using the same database session.
     previous = await analytics_service.get_failures_by_category(

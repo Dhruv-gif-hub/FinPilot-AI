@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     socket_connect_timeout=5
     socket_timeout=5 
     health_check_interval=30
+    LLM:str
 
 
     model_config = SettingsConfigDict(

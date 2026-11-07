@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import case, exists, func, select
@@ -14,8 +14,8 @@ class analytics_repository:
     async def get_payment_counts(
         merchant_id: UUID,
         user_id: UUID,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
         session: AsyncSession
     ):
         
@@ -57,8 +57,8 @@ class analytics_repository:
     async def get_failures_by_category(
         merchant_id: UUID,
         user_id: UUID,
-        start_date: date,
-        end_date: date,
+        start_date: datetime,
+        end_date: datetime,
         session: AsyncSession,
     ) -> dict:
         
@@ -87,3 +87,25 @@ class analytics_repository:
             failure_code: count
             for failure_code, count in result.all()
         }
+
+    @staticmethod
+    async def assert_merchant_access(
+        merchant_id: UUID,
+        user_id: UUID,
+        session: AsyncSession
+    ) ->None:
+        stmt = (
+            select(UserMerchants.user_id)
+            .where(
+                UserMerchants.user_id == user_id,
+                UserMerchants.merchant_id == merchant_id,
+            )
+            .limit(1)
+        )
+
+        result = await session.execute(stmt)
+
+        if result.scalar_one_or_none() is None:
+            raise PermissionError(
+                "User is not authorized for this merchant."
+            )

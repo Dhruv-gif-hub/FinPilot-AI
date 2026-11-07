@@ -15,6 +15,7 @@ def rerank(query: str, rows: Sequence[DocumentChunk], top_k: int = 10):
     scores = reranker.predict(pairs)
     ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)
     return [
-        {"content": c.content, "rerank_score": float(s), "chunk_index": c.chunk_index}
+        {"document_id": c.documents_id, "chunk_id": c.id, "content": c.content, 
+         "rerank_score": float(s), "chunk_index": c.chunk_index}
         for c, s in ranked[:top_k]
     ]

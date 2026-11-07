@@ -12,6 +12,7 @@ from sqlalchemy import (
     Text,
     Uuid,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -27,7 +28,7 @@ class ReconciliationCase(Base):
 
     merchant_id: Mapped[UUID] = mapped_column(Uuid,
                                                   ForeignKey("FinPilot-AI.merchants.id"),
-                                                          unique=True, nullable=False)
+                                                          nullable=False)
 
     transaction_id: Mapped[UUID | None] = mapped_column(
         Uuid,
@@ -42,29 +43,21 @@ class ReconciliationCase(Base):
     )
 
     case_type: Mapped[CaseType] = mapped_column(String(40), nullable=False)
-
     status: Mapped[Status] = mapped_column(String(50), nullable=False)
-
     expected_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
-
     observed_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
-
     currency: Mapped[str | None] = mapped_column(CHAR(3), nullable=True,)
-
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-
     resolution_note: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
-
     # Case creation time
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
-
     # Resolution timestamp
     resolved_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
@@ -80,6 +73,24 @@ class ReconciliationCase(Base):
             created_at.desc(),
         ),
 
+        Index(
+            "uq_reconciliation_case_settlement_item_type",
+            "settlement_item_id",
+            "case_type",
+            unique=True,
+            postgresql_where=text("settlement_item_id IS NOT NULL"),
+    ),
+
+        Index(
+            "uq_reconciliation_case_transaction_type",
+            "transaction_id",
+            "case_type",
+            unique=True,
+            postgresql_where=text(
+                "transaction_id IS NOT NULL "
+                "AND settlement_item_id IS NULL"
+            ),
+        ),
         # Investigate cases related to a transaction
         Index(
             "ix_reconciliation_cases_transaction_id",

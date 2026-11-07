@@ -25,6 +25,6 @@ async def retrieve_chunks(session: AsyncSession,
                     DocumentChunk.user_id == user_id))
             .order_by(similarity)
             .limit(top_k))
-    rows = (await session.scalars(stmt)).all()
-    result =  [row for row in rows if row.similarity <= score_threshold]
+    rows = (await session.execute(stmt)).all()
+    result =  [row[0] for row in rows if row.similarity <= score_threshold]
     return result
