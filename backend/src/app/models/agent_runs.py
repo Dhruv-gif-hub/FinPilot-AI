@@ -8,13 +8,14 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    UniqueConstraint,
     Uuid,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from ..schemas.util import Status
+from ..schemas.util import AgentRunStatus
 from .user import Base
 
 
@@ -28,8 +29,8 @@ class AgentRuns(Base):
                                           ForeignKey("FinPilot-AI.agent_tasks.id"),
                                           nullable=False)
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[Status] = mapped_column(String(50), nullable=False,
-                                                    default=Status.QUEUED)
+    status: Mapped[AgentRunStatus] = mapped_column(String(50), nullable=False,
+                                                    default=AgentRunStatus.RUNNING)
     worker_id: Mapped[str] = mapped_column(String(150), nullable=True)
     started_at: Mapped[datetime] = mapped_column(nullable=True)
     completed_at: Mapped[datetime] = mapped_column(nullable=True)
@@ -39,7 +40,11 @@ class AgentRuns(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                  server_default=func.now())
 
-    __table_args__ = (
+    __table_args__ = (UniqueConstraint(
+            "task_id",
+            "attempt_number",
+            name="uq_agent_runs_task_attempt",
+        ),
         Index(
             "ix_agent_runs_task_attempt_number",
             "task_id",

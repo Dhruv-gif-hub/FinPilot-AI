@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
-
+from ..schemas.util import OutBoxEventStatus
 from .user import Base
 
 
@@ -24,8 +24,7 @@ class OutboxEvent(Base):
     id: Mapped[UUID] = mapped_column(Uuid,
                                         primary_key=True,  server_default=func.gen_random_uuid())
 
-    # For example: agent_task.requested
-    event_type: Mapped[str] = mapped_column(
+    event_type: Mapped[OutBoxEventStatus] = mapped_column(
         String(100),
         nullable=False,
     )

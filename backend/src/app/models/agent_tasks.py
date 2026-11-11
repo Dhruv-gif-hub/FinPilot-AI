@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from uuid_utils import uuid7
 
-from ..schemas.util import Status, TaskType
+from ..schemas.util import AgentTaskStatus, TaskType
 from .user import Base
 
 
@@ -22,10 +22,10 @@ class AgentTask(Base):
                                               ForeignKey("FinPilot-AI.merchants.id"),
                                               nullable=True)
     task_type: Mapped[TaskType] = mapped_column(String(40), nullable=False)
-    status: Mapped[Status] = mapped_column(String(50), nullable=False,
-                                                    default=Status.QUEUED)
+    status: Mapped[AgentTaskStatus] = mapped_column(String(50), nullable=False,
+                                                    default=AgentTaskStatus.QUEUED)
     instruction: Mapped[str] = mapped_column(String, nullable=False)
-    input_payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    input_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
     idempotency_key: Mapped[UUID] = mapped_column(Uuid, unique=True, nullable=False)
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     thread_id: Mapped[str] = mapped_column(String(255), unique=True, 
@@ -45,6 +45,7 @@ class AgentTask(Base):
 
     __table_args__ = (UniqueConstraint(
             "user_id",
+            "merchant_id",
             "idempotency_key",
             name="uq_agent_tasks_user_idempotency_key",
         ),

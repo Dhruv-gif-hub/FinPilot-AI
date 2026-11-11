@@ -12,6 +12,24 @@ class Status(str, Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+class AgentTaskStatus(str, Enum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+class AgentRunStatus(str, Enum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+class OutBoxEventStatus(str, Enum):
+    PENDING = "pending"
+    PUBLISHING = "publishing"
+    PUBLISHED = "published"
+    FAILED = "failed"
+
 class Role(str, Enum):
     OWNER = "owner"
     ANALYST = "analyst"
