@@ -40,6 +40,12 @@ class TaskType(str, Enum):
     RECONCILIATION = "reconciliation"
     FINANCIAL_RESEARCH = "financial_research"
 
+class EventType(str, Enum):
+    AGENT_TASK_CREATED = "agent_task_created"
+    AGENT_TASK_UPDATED = "agent_task_updated"
+    AGENT_TASK_COMPLETED = "agent_task_completed"
+    AGENT_TASK_FAILED = "agent_task_failed"
+
 class ItemType(str, Enum):
     PAYMENT = "payment"
     REFUND = "refund"

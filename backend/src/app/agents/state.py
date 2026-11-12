@@ -1,4 +1,5 @@
 import operator
+from datetime import datetime
 from typing import Annotated, Any, TypedDict
 
 from langgraph.graph.message import AnyMessage, add_messages
@@ -11,6 +12,12 @@ class FinPilotState(TypedDict, total=False):
     user_id: str
     merchant_id: str
     request: Annotated[list[str], operator.add]
+    
+    previous_start: datetime
+    previous_end: datetime
+    current_start: datetime
+    current_end: datetime
+
 
     # Planning and specialist results
     plan: dict[str, Any]

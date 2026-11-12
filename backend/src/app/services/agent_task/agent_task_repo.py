@@ -17,6 +17,7 @@ class AgentTaskRepository:
         task = AgentTask(**kwargs)
 
         session.add(task)
+        await session.flush()
 
         return task
 

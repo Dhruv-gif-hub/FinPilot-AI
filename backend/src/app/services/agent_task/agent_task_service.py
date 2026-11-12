@@ -2,8 +2,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...core.request_hash import generate_request_hash
 from ...schemas.agent_tasks import AgentTaskCreate
-from ...schemas.util import AgentTaskStatus, OutBoxEventStatus
+from ...schemas.util import AgentTaskStatus, EventType
 from ..membership.user_merchant_service import MerchantMembershipService
 from ..outbox.outbox_repo import OutboxRepository
 from .agent_task_repo import AgentTaskRepository
@@ -29,6 +30,10 @@ class AgentTaskService:
 
         if request.task_type not in allowed_types:
             raise ValueError("Unsupported task type.")
+
+        request_hash = generate_request_hash(
+            user_id=user_id, request=request
+        )
 
         # 2. One database transaction for both records.
         async with session.begin():
@@ -76,6 +81,7 @@ class AgentTaskService:
                 task_type=request.task_type,
                 instruction=request.prompt,
                 input_data=request.input_data,
+                request_hash=request_hash,
                 idempotency_key=idempotency_key,
                 status=AgentTaskStatus.QUEUED,
             )
@@ -83,7 +89,7 @@ class AgentTaskService:
             # 6. Create OutboxEvent.
             await OutboxRepository.create(
                 session,
-                event_type=OutBoxEventStatus.PENDING,
+                event_type=EventType.AGENT_TASK_CREATED,
                 aggregate_id=task.id,
                 payload={
                     "task_id": str(task.id),

@@ -3,14 +3,13 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from .util import TaskType
+
 
 class AgentTaskCreate(BaseModel):
     merchant_id: UUID
 
-    task_type: str = Field(
-        min_length=2,
-        max_length=80,
-    )
+    task_type: TaskType
 
     prompt: str = Field(
         min_length=5,

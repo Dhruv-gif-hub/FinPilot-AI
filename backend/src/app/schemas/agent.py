@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 from uuid import UUID
@@ -13,6 +14,10 @@ class InvestigationPlan(BaseModel):
 
     requires_analytics_agent: bool = True
     requires_research_agent: bool = True
+    previous_start: datetime
+    previous_end: datetime
+    current_start: datetime
+    current_end: datetime
 
 
 class FinancialFinding(BaseModel):

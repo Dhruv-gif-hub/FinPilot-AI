@@ -31,10 +31,11 @@ class AgentTask(Base):
     thread_id: Mapped[str] = mapped_column(String(255), unique=True, 
                                            default=lambda: str(uuid7()))
     current_run_id: Mapped[UUID] = mapped_column(Uuid, nullable=True)
-    result_summary: Mapped[str] = mapped_column(String, nullable=True)
+    result_summary: Mapped[dict] = mapped_column(JSONB, nullable=True)
     error_code: Mapped[str] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                  server_default=func.now())
+    lease_expires_at: Mapped[datetime|None] = mapped_column(DateTime(timezone=True), nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                  nullable=True)
     completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),

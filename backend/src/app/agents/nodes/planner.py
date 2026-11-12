@@ -23,6 +23,9 @@ async def planner_node(state, runtime) -> dict:
             - Payment metrics
             - Period comparison
             - Internal documentation retrieval
+            - External Information Search
+            - AI agents
+            - Relevant dates
 
             Do not execute tools.
             Do not invent financial results.

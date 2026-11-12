@@ -15,7 +15,7 @@ backend_url = (
 )
 
 celery = Celery(
-    "knowbase-ai", # this specifies the name of the Celery application
+    "FinPilot-AI", # this specifies the name of the Celery application
 
     broker=broker_url, # this specifies the broker URL for Celery to send and receive messages 
 

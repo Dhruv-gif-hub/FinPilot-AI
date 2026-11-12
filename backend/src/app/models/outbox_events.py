@@ -14,7 +14,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
-from ..schemas.util import OutBoxEventStatus
+
+from ..schemas.util import EventType, OutBoxEventStatus
 from .user import Base
 
 
@@ -24,9 +25,14 @@ class OutboxEvent(Base):
     id: Mapped[UUID] = mapped_column(Uuid,
                                         primary_key=True,  server_default=func.gen_random_uuid())
 
-    event_type: Mapped[OutBoxEventStatus] = mapped_column(
+    event_type: Mapped[EventType] = mapped_column(
         String(100),
         nullable=False,
+    )
+
+    status: Mapped[OutBoxEventStatus] = mapped_column(
+        String(100),
+        default=OutBoxEventStatus
     )
 
     # ID of the task or other business entity
@@ -56,6 +62,16 @@ class OutboxEvent(Base):
 
     # When successful publication was recorded
     published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    available_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    locked_until: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )

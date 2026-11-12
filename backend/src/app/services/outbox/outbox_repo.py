@@ -1,5 +1,7 @@
-from ...models.outbox_events import OutboxEvent
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from ...models.outbox_events import OutboxEvent
+
 
 class OutboxRepository:
 
@@ -13,4 +15,6 @@ class OutboxRepository:
 
         session.add(event)
 
+        await session.flush()
+        
         return event
