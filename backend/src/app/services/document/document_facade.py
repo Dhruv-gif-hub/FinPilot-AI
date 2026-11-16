@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import UploadFile
 
 from ...core.background_task.tasks import BackgroundDocumentUpload
+from ...core.middleware.logging import logger
 from .document_repo import DocumentService
 
 
@@ -27,10 +28,16 @@ class DocumentServiceFacade:
         try:
             for completed in asyncio.as_completed(tasks):
                 extracted_text = await completed
+                try:
+                    extracted_text = await completed
+                    
+                except Exception as e:
+                    logger.warning(f"Extraction failed: {e}")
+                    continue
 
-            BackgroundDocumentUpload.delay(
-                user_id = str(user_id),
-                extracted_text = extracted_text.model_dump(mode="json")) # type: ignore
+                BackgroundDocumentUpload.delay(
+                    user_id = str(user_id),
+                    extracted_text = extracted_text.model_dump(mode="json")) # type: ignore
         finally:
             for task in tasks:
                 if not task.done():

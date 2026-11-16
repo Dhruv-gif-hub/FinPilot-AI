@@ -1,8 +1,6 @@
 import asyncio
 from uuid import UUID
 
-from celery.exceptions import MaxRetriesExceededError
-
 from app.agents.factory import create_finpilot_graph
 
 from ..core.background_task.celery_setup import celery
@@ -69,15 +67,8 @@ def execute_agent_task(
 
     except Exception as exc:
 
-        # Production code should classify transient and
-        # permanent exceptions instead of retrying all errors.
-        try:
-
-            raise self.retry(
-                exc=exc,
-                countdown=30 * (2 ** self.request.retries),
-                max_retries=3,
-            )
-
-        except MaxRetriesExceededError:
-            raise
+        raise self.retry(
+            exc=exc,
+            countdown=30 * (2 ** self.request.retries),
+            max_retries=3,
+        )

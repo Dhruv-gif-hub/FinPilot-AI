@@ -56,7 +56,6 @@ class ReportRepository:
 
         await session.flush()
 
-        await session.commit()
         return report
 
     @staticmethod
@@ -253,9 +252,9 @@ class ReportRepository:
             )
         )
 
-        result = await session.execute(stmt)
+        result = await session.scalars(stmt)
 
-        report = result.scalar_one_or_none()
+        report = result.first()
 
         if report is None:
             raise LookupError(

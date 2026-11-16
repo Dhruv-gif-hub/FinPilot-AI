@@ -1,6 +1,7 @@
-from .ReportRepository import ReportRepository
-from ...db.session import Session_local
 from uuid import UUID
+from ...db.session import Session_local
+from .ReportRepository import ReportRepository
+
 
 class ReportService:
 
@@ -21,3 +22,33 @@ class ReportService:
                 report_data=report_data,
                 report_version=report_version
             )
+
+    @staticmethod
+    async def list_reports(
+        *,
+        task_id: UUID,
+        user_id: UUID,
+        merchant_id: UUID,
+    ):
+        async with Session_local() as session:
+            return await ReportRepository.list_reports(
+                session=session,
+                task_id=task_id,
+                user_id=user_id,
+                merchant_id=merchant_id
+            )
+
+    @staticmethod
+    async def report(
+        report_id: UUID,
+        user_id: UUID,
+        merchant_id: UUID,
+    ):
+        async with Session_local() as session:
+            return await ReportRepository.get_report(
+                session=session,
+                report_id=report_id,
+                user_id=user_id,
+                merchant_id=merchant_id
+            )
+        

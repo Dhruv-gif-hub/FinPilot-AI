@@ -18,8 +18,9 @@ def BackgroundDocumentUpload(user_id: str, extracted_text):
                 pdf_data = PDF_data.model_validate(extracted_text)
                 await DocumentService.process_document(session = session, user_id = UUID(user_id),
                                                     extracted_text = pdf_data)
-                await session.commit()
+                
             except Exception:
                 await session.rollback()
                 raise
+            
     asyncio.run(run_pipeline())

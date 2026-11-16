@@ -32,7 +32,7 @@ class OutboxEvent(Base):
 
     status: Mapped[OutBoxEventStatus] = mapped_column(
         String(100),
-        default=OutBoxEventStatus
+        default=OutBoxEventStatus.PENDING
     )
 
     # ID of the task or other business entity

@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.request_hash import generate_request_hash
@@ -29,10 +30,14 @@ class AgentTaskService:
         }
 
         if request.task_type not in allowed_types:
-            raise ValueError("Unsupported task type.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unsupported task type.",
+            )
 
         request_hash = generate_request_hash(
-            user_id=user_id, request=request
+            user_id=user_id, 
+            request=request
         )
 
         # 2. One database transaction for both records.
@@ -52,6 +57,7 @@ class AgentTaskService:
                 user_id=user_id,
                 merchant_id=request.merchant_id,
             )
+            response = None
 
             # 4. Handle a repeated client request.
             if idempotency_key:
@@ -66,42 +72,58 @@ class AgentTaskService:
                     )
                 )
 
-                if existing is not None:
-                    return {
+                if existing is not None and existing.request_hash == request_hash:
+                    response = {
                         "task_id": existing.id,
-                        "status": str(existing.status),
+                        "status": existing.status,
                         "message": "Existing task returned.",
+                        "is_duplicate": True,
                     }
 
-            # 5. Create AgentTask.
-            task = await AgentTaskRepository.create(
-                session,
-                user_id=user_id,
-                merchant_id=request.merchant_id,
-                task_type=request.task_type,
-                instruction=request.prompt,
-                input_data=request.input_data,
-                request_hash=request_hash,
-                idempotency_key=idempotency_key,
-                status=AgentTaskStatus.QUEUED,
-            )
+                else:
 
-            # 6. Create OutboxEvent.
-            await OutboxRepository.create(
-                session,
-                event_type=EventType.AGENT_TASK_CREATED,
-                aggregate_id=task.id,
-                payload={
-                    "task_id": str(task.id),
-                },
-                status="pending",
-                attempts=0,
-            )
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=(
+                            "Idempotency key has already been "
+                            "used with a different request."
+                        ),
+                    )
 
-            # Both inserts commit together.
+            if response is None:
+                # 5. Create AgentTask.
+                async with session.begin():
+                    task = await AgentTaskRepository.create(
+                        session,
+                        user_id=user_id,
+                        merchant_id=request.merchant_id,
+                        task_type=request.task_type,
+                        instruction=request.prompt,
+                        input_data=request.input_data,
+                        request_hash=request_hash,
+                        idempotency_key=idempotency_key,
+                        status=AgentTaskStatus.QUEUED,
+                    )
 
-            return {
-                "task_id": task.id,
-                "status": str(task.status),
-                "message": "Agent task accepted.",
-            }
+                    # 6. Create OutboxEvent.
+                    await OutboxRepository.create(
+                        session,
+                        event_type=EventType.AGENT_TASK_CREATED,
+                        aggregate_id=task.id,
+                        payload={
+                            "task_id": str(task.id),
+                        },
+                        status="pending",
+                        attempts=0,
+                    )
+
+                    # Both inserts commit together.
+
+                    response = {
+                        "task_id": task.id,
+                        "status": str(task.status),
+                        "message": "Agent task accepted.",
+                        "is_duplicate": False,
+                    }
+                
+            return response

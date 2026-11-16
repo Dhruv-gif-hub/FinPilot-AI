@@ -26,7 +26,7 @@ class AgentTask(Base):
                                                     default=AgentTaskStatus.QUEUED)
     instruction: Mapped[str] = mapped_column(String, nullable=False)
     input_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    idempotency_key: Mapped[UUID] = mapped_column(Uuid, unique=True, nullable=False)
+    idempotency_key: Mapped[UUID] = mapped_column(Uuid, nullable=False)
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     thread_id: Mapped[str] = mapped_column(String(255), unique=True, 
                                            default=lambda: str(uuid7()))
@@ -40,9 +40,10 @@ class AgentTask(Base):
                                                  nullable=True)
     completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                    nullable=True)
-    cancel_requested_at: Mapped[datetime] = mapped_column(nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
-                                                 nullable=True)
+    cancel_requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
+                                                          nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True,
+                        server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (UniqueConstraint(
             "user_id",
