@@ -61,7 +61,7 @@ def route_after_evaluator(state: FinPilotState) -> str:
 
 def build_finpilot_graph(
     *,
-    checkpointer=None,
+    checkpointer=None, store=None
 ):
 
     """
@@ -218,5 +218,5 @@ def build_finpilot_graph(
     # ----------------------------------------------
 
     return builder.compile(
-        checkpointer=checkpointer
+        checkpointer=checkpointer, store=store
     )

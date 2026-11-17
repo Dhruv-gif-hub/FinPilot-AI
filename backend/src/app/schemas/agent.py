@@ -67,6 +67,7 @@ class FinancialAnalysisResult(BaseModel):
     limitations: list[str] = Field(
         default_factory=list
     )
+    store: list[dict]|None = Field(description="User preferance data")
 
 
 class ResearchEvidence(BaseModel):
@@ -78,7 +79,6 @@ class ResearchEvidence(BaseModel):
     )
     source_type: Literal[
         "internal_document",
-        "merchant_document",
         "financial_metric",
         "external_source",
     ]

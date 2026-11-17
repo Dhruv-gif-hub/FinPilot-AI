@@ -11,6 +11,7 @@ class FinPilotState(TypedDict, total=False):
     thread_id: str
     user_id: str
     merchant_id: str
+    user_preferance: list[dict]
     request: Annotated[list[str], operator.add]
     
     previous_start: datetime

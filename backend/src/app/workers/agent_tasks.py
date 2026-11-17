@@ -4,10 +4,11 @@ from uuid import UUID
 from app.agents.factory import create_finpilot_graph
 
 from ..core.background_task.celery_setup import celery
+from ..main import app
 from ..services.task_execution.task_execution import ExecuteAgentTask
 
 _worker_loop = None
-_graph = None
+_graph = app.state.graph
 
 
 def get_worker_loop():
@@ -35,7 +36,7 @@ def get_graph():
 
     if _graph is None:
         _graph = create_finpilot_graph(
-            checkpointer=...,
+            checkpointer=..., store=...
         )
 
     return _graph

@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -55,7 +56,73 @@ class TransactionCSVRow(BaseModel):
     @field_validator("failure_code", mode="before")
     @classmethod
     def normalize_failure_code(cls, value):
-        if value is None or value == "":
+        if value is None or not str(value).strip():
             return None
 
         return str(value).strip() or None
+
+class SettlementCSVRow(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    provider_settlement_id: str = Field(
+        min_length=1,
+        max_length=150,
+    )
+
+    settlement_currency: str = Field(
+        min_length=3,
+        max_length=3,
+    )
+
+    gross_amount: Decimal = Field(
+        ge=0,
+        max_digits=18,
+        decimal_places=2,
+    )
+
+    fees_amount: Decimal = Field(
+        ge=0,
+        max_digits=18,
+        decimal_places=2,
+    )
+
+    adjustments_amount: Decimal = Field(
+        max_digits=18,
+        decimal_places=2,
+    )
+
+    net_amount: Decimal = Field(
+        max_digits=18,
+        decimal_places=2,
+    )
+
+    settlement_status: str = Field(
+        default="pending",
+        min_length=1,
+        max_length=30,
+    )
+
+    settled_at: datetime | None = None
+
+
+class SettlementItemCSVRow(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    provider_item_id: str = Field(
+        min_length=1,
+        max_length=150,
+    )
+
+    item_type: str
+
+    item_amount: Decimal = Field(
+        max_digits=18,
+        decimal_places=2,
+    )
+
+    item_currency: str = Field(
+        min_length=3,
+        max_length=3,
+    )
+
+    item_provider_payment_id: str | None = None

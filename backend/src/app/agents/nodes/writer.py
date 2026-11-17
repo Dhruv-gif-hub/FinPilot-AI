@@ -1,6 +1,6 @@
 from typing import cast
 
-from langchain.messages import HumanMessage, SystemMessage
+from langchain.messages import AIMessage, HumanMessage, SystemMessage
 
 from ...schemas.agent import ReportDraft
 from ..llm import get_llm
@@ -45,5 +45,6 @@ async def writer_node(state):
     ]))
 
     return {
-        "final_report": report.model_dump()
+        "final_report": report.model_dump(),
+        "messages": AIMessage(report.model_dump_json())
     }

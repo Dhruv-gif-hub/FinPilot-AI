@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from langchain.messages import HumanMessage
 
 from ..sub_agents.financial_analyst import financial_analyst
@@ -6,6 +8,10 @@ from ..sub_agents.financial_analyst import financial_analyst
 async def analyst_node(state, runtime):
 
     context = runtime.context
+    user_id = context.user_id
+
+    namespace_for_memory = (user_id, "memories")
+    store = runtime.store
 
     prompt = f"""
     Analyze the following payment metrics.
@@ -32,7 +38,15 @@ async def analyst_node(state, runtime):
     )
 
     analysis = result["structured_response"]
-    ai_message = result["messages"][-1]   
+    ai_message = result["messages"][-1]
+    user_preferance = analysis["store"]
+
+    await store.aput(
+        namespace_for_memory,
+        str(uuid4()),
+        user_preferance
+    )
+
 
     return {
         "analyst_result": analysis.model_dump(),

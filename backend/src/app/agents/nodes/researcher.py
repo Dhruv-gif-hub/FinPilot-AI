@@ -27,7 +27,6 @@ async def researcher_node(state, runtime):
     Search for relevant troubleshooting guides,
     payment failure explanations, and operational policies.
 
-    Preserve document and chunk identifiers.
     Do not assume a documented issue caused the observed
     financial changes.
     """

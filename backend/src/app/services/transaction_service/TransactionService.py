@@ -1,93 +1,176 @@
 import csv
 import io
+from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException, UploadFile
-from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...models.financial_transactions import FinancialTransactions
-from ...schemas.transaction import TransactionCSVRow
-from ...schemas.util import Status
+from app.models.financial_transactions import FinancialTransactions
+from app.models.settlement_items import SettlementItem
+from app.models.settlements import Settlement
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
-MAX_ROWS = 10_000
-BATCH_SIZE = 500
-
-REQUIRED_COLUMNS = {
-    "provider",
-    "provider_payment_id",
-    "amount",
-    "currency",
-    "status",
-    "payment_method",
-}
-
-STATUS_ALIASES = {
-    "SUCCESS": ("SUCCESS", "SUCCEEDED", "COMPLETED"),
-    "FAILED": ("FAILED", "FAILURE", "DECLINED"),
-    "PENDING": ("PENDING", "PROCESSING", "QUEUED"),
-    "QUEUED": ("QUEUED", "PENDING", "PROCESSING"),
-}
 
 
-def resolve_status(raw_status: str) -> str:
-    """
-    Resolve a CSV status label to a value supported by
-    the application's Status enum.
-    """
+def decimal_or_none(value: str | None) -> Decimal | None:
+    if value is None or not value.strip():
+        return None
 
-    normalized = raw_status.strip().upper()
+    return Decimal(value.strip())
 
-    candidates = STATUS_ALIASES.get(
-        normalized,
-        (normalized,),
+
+def datetime_or_none(value: str | None) -> datetime | None:
+    if value is None or not value.strip():
+        return None
+
+    return datetime.fromisoformat(value.strip())
+
+
+async def get_or_create_transaction(
+    session: AsyncSession,
+    *,
+    merchant_id: UUID,
+    row: dict,
+) -> UUID | None:
+
+    provider_payment_id = (row.get("provider_payment_id") or "").strip()
+
+    if not provider_payment_id:
+        return None
+
+    provider = row["provider"].strip().lower()
+
+    statement = (
+        insert(FinancialTransactions)
+        .values(
+            merchant_id=merchant_id,
+            provider=provider,
+            provider_payment_id=provider_payment_id,
+            amount=Decimal(row["amount"]),
+            currency=row["currency"].strip().upper(),
+            status=row["status"].strip().upper(),
+            failure_code=(row.get("failure_code") or "").strip() or None,
+            payment_method=row["payment_method"].strip().lower(),
+        )
+        .on_conflict_do_nothing(
+            constraint="uq_financial_transactions_provider_payment"
+        )
+        .returning(FinancialTransactions.id)
     )
 
-    for candidate in candidates:
+    transaction_id = await session.scalar(statement)
 
-        # Match the enum member name.
-        member = Status.__members__.get(candidate)
+    if transaction_id is not None:
+        return transaction_id
 
-        if member is not None:
-            return str(member.value)
-
-        # Match the enum member value.
-        for member in Status:
-            if str(member.value).upper() == candidate:
-                return str(member.value)
-
-    raise ValueError(
-        f"Unsupported transaction status: {raw_status}"
+    # It already exists: retrieve its ID for the settlement item.
+    return await session.scalar(
+        select(FinancialTransactions.id).where(
+            FinancialTransactions.provider == provider,
+            FinancialTransactions.provider_payment_id == provider_payment_id,
+        )
     )
 
 
-def parse_transaction_row(data: dict) -> dict:
+async def get_or_create_settlement(
+    session: AsyncSession,
+    *,
+    merchant_id: UUID,
+    row: dict,
+) -> UUID | None:
 
-    validated = TransactionCSVRow.model_validate(data)
+    provider_settlement_id = (
+        row.get("provider_settlement_id") or ""
+    ).strip()
 
-    result = validated.model_dump()
+    if not provider_settlement_id:
+        return None
 
-    result["status"] = resolve_status(result["status"])
+    provider = row["provider"].strip().lower()
 
-    result["provider"] = result["provider"].lower()
-    result["payment_method"] = result["payment_method"].lower()
+    statement = (
+        insert(Settlement)
+        .values(
+            merchant_id=merchant_id,
+            provider=provider,
+            provider_settlement_id=provider_settlement_id,
+            currency=row["settlement_currency"].strip().upper(),
+            gross_amount=Decimal(row["gross_amount"]),
+            fees_amount=Decimal(row["fees_amount"]),
+            adjustments_amount=(
+                decimal_or_none(row.get("adjustments_amount"))
+                or Decimal("0")
+            ),
+            net_amount=Decimal(row["net_amount"]),
+            status=(row.get("settlement_status") or "pending").strip().lower(),
+            settled_at=datetime_or_none(row.get("settled_at")),
+        )
+        .on_conflict_do_nothing(
+            constraint="uq_settlements_merchant_provider_settlement"
+        )
+        .returning(Settlement.id)
+    )
 
-    if result["failure_code"]:
-        result["failure_code"] = result["failure_code"].upper()
+    settlement_id = await session.scalar(statement)
 
-    return result
+    if settlement_id is not None:
+        return settlement_id
+
+    # Reuse an existing settlement.
+    return await session.scalar(
+        select(Settlement.id).where(
+            Settlement.merchant_id == merchant_id,
+            Settlement.provider == provider,
+            Settlement.provider_settlement_id == provider_settlement_id,
+        )
+    )
 
 
-async def import_transactions_csv(
+async def create_settlement_item(
+    session: AsyncSession,
+    *,
+    settlement_id: UUID,
+    transaction_id: UUID | None,
+    row: dict,
+) -> bool:
+
+    provider_item_id = (row.get("provider_item_id") or "").strip()
+
+    if not provider_item_id:
+        return False
+
+    statement = (
+        insert(SettlementItem)
+        .values(
+            settlement_id=settlement_id,
+            transaction_id=transaction_id,
+            provider_item_id=provider_item_id,
+            item_type=row["item_type"].strip().lower(),
+            amount=Decimal(row["item_amount"]),
+            currency=row["item_currency"].strip().upper(),
+        )
+        .on_conflict_do_nothing(
+            constraint="uq_settlement_items_settlement_provider_item"
+        )
+        .returning(SettlementItem.id)
+    )
+
+    item_id = await session.scalar(statement)
+
+    return item_id is not None
+
+
+async def import_financial_csv(
     session: AsyncSession,
     *,
     merchant_id: UUID,
     file: UploadFile,
 ) -> dict:
 
-    # 1. Read and validate file size.
     content = await file.read(MAX_FILE_SIZE + 1)
 
     if len(content) > MAX_FILE_SIZE:
@@ -96,128 +179,73 @@ async def import_transactions_csv(
             detail="CSV file exceeds the 10 MB limit.",
         )
 
-    # 2. Decode CSV.
     try:
-        text = content.decode("utf-8-sig")
+        csv_text = content.decode("utf-8-sig")
     except UnicodeDecodeError:
         raise HTTPException(
             status_code=400,
-            detail="CSV must be UTF-8 encoded.",
+            detail="CSV must use UTF-8 encoding.",
         )
 
-    reader = csv.DictReader(io.StringIO(text))
+    reader = csv.DictReader(io.StringIO(csv_text))
 
     if not reader.fieldnames:
         raise HTTPException(
             status_code=400,
-            detail="CSV file is empty or has no header.",
+            detail="CSV file is empty.",
         )
 
-    if len(reader.fieldnames) != len(set(reader.fieldnames)):
-        raise HTTPException(
-            status_code=400,
-            detail="CSV contains duplicate column names.",
-        )
-
-    missing_columns = REQUIRED_COLUMNS - set(reader.fieldnames)
-
-    if missing_columns:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "message": "CSV is missing required columns.",
-                "missing_columns": sorted(missing_columns),
-            },
-        )
-
-    # 3. Validate all rows before inserting anything.
-    valid_records = []
-    errors = []
-    total_rows = 0
-
-    for row_number, raw_row in enumerate(reader, start=2):
-
-        if not any((value or "").strip() for value in raw_row.values()):
-            continue
-
-        total_rows += 1
-
-        if total_rows > MAX_ROWS:
-            raise HTTPException(
-                status_code=413,
-                detail=f"CSV cannot contain more than {MAX_ROWS} records.",
-            )
-
-        # Never trust merchant_id supplied by the CSV.
-        # The authorized merchant_id comes from the API request.
-        row_data = {
-            key: (value or "").strip()
-            for key, value in raw_row.items()
-            if key != "merchant_id"
-        }
-
-        try:
-            transaction = parse_transaction_row(row_data)
-
-            transaction["merchant_id"] = merchant_id
-
-            valid_records.append(transaction)
-
-        except (ValidationError, ValueError) as exc:
-
-            errors.append({
-                "row": row_number,
-                "error": str(exc),
-            })
-
-    # All-or-nothing validation: no partial import.
-    if errors:
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "message": "CSV validation failed. No records were imported.",
-                "total_errors": len(errors),
-                "errors": errors[:20],
-            },
-        )
-
-    if not valid_records:
-        raise HTTPException(
-            status_code=400,
-            detail="CSV contains no transaction records.",
-        )
-
-    # 4. Bulk insert in batches.
-    inserted_count = 0
+    item_count = 0
+    rows_processed = 0
 
     try:
-        for start in range(0, len(valid_records), BATCH_SIZE):
+        for row in reader:
 
-            batch = valid_records[
-                start : start + BATCH_SIZE
-            ]
+            if not any((value or "").strip() for value in row.values()):
+                continue
 
-            statement = (
-                insert(FinancialTransactions)
-                .values(batch)
-                .on_conflict_do_nothing(
-                    constraint="uq_financial_transactions_provider_payment"
-                )
-                .returning(FinancialTransactions.id)
+            rows_processed += 1
+
+            # 1. Create or retrieve transaction.
+            transaction_id = await get_or_create_transaction(
+                session,
+                merchant_id=merchant_id,
+                row=row,
             )
 
-            result = await session.execute(statement)
+            if transaction_id is not None:
+                # This counts newly created records, not existing ones.
+                # The helper returns an ID in both cases, so use the
+                # returned insertion status if exact counts are needed.
+                pass
 
-            inserted_ids = result.scalars().all()
+            # 2. Create or retrieve settlement.
+            settlement_id = await get_or_create_settlement(
+                session,
+                merchant_id=merchant_id,
+                row=row,
+            )
 
-            inserted_count += len(inserted_ids)
+            # 3. Create settlement item if supplied.
+            if settlement_id is not None:
+                created = await create_settlement_item(
+                    session,
+                    settlement_id=settlement_id,
+                    transaction_id=transaction_id,
+                    row=row,
+                )
+
+                if created:
+                    item_count += 1
+
+        await session.flush()
 
     except Exception:
         await session.rollback()
         raise
 
     return {
-        "total_valid_rows": len(valid_records),
-        "inserted": inserted_count,
-        "skipped_duplicates": len(valid_records) - inserted_count,
+        "rows_processed": rows_processed,
+        "settlement_items_inserted": item_count,
+        "message": "CSV import completed.",
     }

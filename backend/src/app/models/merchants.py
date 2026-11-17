@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CHAR, DateTime, String, Uuid, func
+from sqlalchemy import CHAR, DateTime, String, Uuid, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .user import Base
@@ -9,7 +9,11 @@ from .user import Base
 
 class Merchants(Base):
     __tablename__ = "merchants"
-    __table_args__ = ({"schema": "FinPilot-AI"},)
+    __table_args__ = (
+        UniqueConstraint(
+            "external_ref",
+            name="uq_merchants_external_ref",
+        ),{"schema": "FinPilot-AI"},)
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, 
                                       server_default=func.gen_random_uuid())

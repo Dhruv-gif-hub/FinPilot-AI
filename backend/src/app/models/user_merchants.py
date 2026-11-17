@@ -17,7 +17,7 @@ class UserMerchants(Base):
     merchant_id: Mapped[UUID] = mapped_column(ForeignKey("FinPilot-AI.merchants.id"),
                                                primary_key=True, nullable=False)
     role: Mapped[Role] = mapped_column(String(30), 
-                                       unique = False, nullable=False, default=Role.OWNER)
+                                       unique = False, nullable=False, default=Role.ANALYST)
 
     user: Mapped["User"] = relationship(back_populates="user_merchants")    
     merchant: Mapped["Merchants"] = relationship(back_populates="user_merchants")
