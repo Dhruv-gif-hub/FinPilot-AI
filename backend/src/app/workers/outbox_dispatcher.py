@@ -152,3 +152,12 @@ async def dispatch_pending_events() -> int:
             )
 
     return published_count
+
+@celery.task(
+    name="app.workers.outbox_dispatcher.dispatch_outbox"
+)
+def dispatch_outbox():
+
+    return asyncio.run(
+        dispatch_pending_events()
+    )

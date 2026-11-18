@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.request_hash import generate_request_hash
 from ...schemas.agent_tasks import AgentTaskCreate
+from ...schemas.response import Report
 from ...schemas.util import AgentTaskStatus, EventType
+from ...services.report.ReportRepository import ReportRepository
 from ..membership.user_merchant_service import MerchantMembershipService
 from ..outbox.outbox_repo import OutboxRepository
 from .agent_task_repo import AgentTaskRepository
@@ -44,13 +46,6 @@ class AgentTaskService:
         async with session.begin():
 
             # 3. Verify the user's merchant membership.
-            #
-            # Implement this using your actual UserMerchant model.
-            # Do not omit it in the real application.
-            if MerchantMembershipService is None:
-                raise RuntimeError(
-                    "Merchant membership validation is not configured."
-                )
 
             await MerchantMembershipService.verify_merchant_access(
                 session=session,
@@ -92,38 +87,93 @@ class AgentTaskService:
 
             if response is None:
                 # 5. Create AgentTask.
-                async with session.begin():
-                    task = await AgentTaskRepository.create(
-                        session,
-                        user_id=user_id,
-                        merchant_id=request.merchant_id,
-                        task_type=request.task_type,
-                        instruction=request.prompt,
-                        input_data=request.input_data,
-                        request_hash=request_hash,
-                        idempotency_key=idempotency_key,
-                        status=AgentTaskStatus.QUEUED,
-                    )
+                task = await AgentTaskRepository.create(
+                    session,
+                    user_id=user_id,
+                    merchant_id=request.merchant_id,
+                    task_type=request.task_type,
+                    instruction=request.prompt,
+                    input_data=request.input_data,
+                    request_hash=request_hash,
+                    idempotency_key=idempotency_key,
+                    status=AgentTaskStatus.QUEUED,
+                )
 
-                    # 6. Create OutboxEvent.
-                    await OutboxRepository.create(
-                        session,
-                        event_type=EventType.AGENT_TASK_CREATED,
-                        aggregate_id=task.id,
-                        payload={
-                            "task_id": str(task.id),
-                        },
-                        status="pending",
-                        attempts=0,
-                    )
+                # 6. Create OutboxEvent.
+                await OutboxRepository.create(
+                    session,
+                    event_type=EventType.AGENT_TASK_CREATED,
+                    aggregate_id=task.id,
+                    payload={
+                        "task_id": str(task.id),
+                    },
+                    status="pending",
+                    attempts=0,
+                )
 
-                    # Both inserts commit together.
+                # Both inserts commit together.
 
-                    response = {
-                        "task_id": task.id,
-                        "status": str(task.status),
-                        "message": "Agent task accepted.",
-                        "is_duplicate": False,
-                    }
-                
+                response = {
+                    "task_id": task.id,
+                    "status": str(task.status),
+                    "message": "Agent task accepted.",
+                    "is_duplicate": False,
+                }
+            
             return response
+
+    @staticmethod
+    async def get_task_result(
+        session: AsyncSession,
+        *,
+        task_id: UUID
+    ):
+        task = await AgentTaskRepository.get_by_task_id(
+            session=session, task_id=task_id)
+        if task is None:
+            return None
+
+        task_status = task.status
+
+        if task.status != AgentTaskStatus.COMPLETED:
+            messages = {
+                "queued": "Task is waiting for execution.",
+                "running": "Agent is processing your request.",
+                "failed": "Task execution failed."
+            }
+
+            return Report(
+                task_id=task.id,
+                status=task_status,
+                message=messages.get(
+                    task_status.lower(),
+                    "Task is being processed.",
+                ),
+                report=None,
+            )
+
+        # 3. Task is completed. Retrieve its report.
+        report = await ReportRepository.get_by_task_id(
+            session=session,
+            task_id=task.id,
+        )
+
+        # 4. A completed task should have a persisted report.
+        if report is None:
+            raise RuntimeError(
+                "Task is marked COMPLETED but its report is missing."
+            )
+
+        # 5. Return the report.
+        return Report(
+            task_id=task.id,
+            status=task_status,
+            message="Task completed successfully.",
+            report={
+                "report_id": report.id,
+                "title": report.title,
+                "summary": report.summary,
+                "findings": report.evidence,
+                "recommendations": report.recommendations,
+            },
+        )

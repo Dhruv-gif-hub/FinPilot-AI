@@ -53,3 +53,19 @@ class AgentTaskRepository:
         result = await session.scalars(stmt)
 
         return result.first()
+
+    @staticmethod
+    async def get_by_task_id(
+        session: AsyncSession,
+        *,
+        task_id: UUID
+    ):
+        stmt = (
+            select(AgentTask)
+            .where(
+                AgentTask.id == task_id
+            )
+        )
+        result = await session.scalars(stmt)
+
+        return result.first()

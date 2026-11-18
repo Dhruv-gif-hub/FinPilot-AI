@@ -34,8 +34,6 @@ class AgentReport(Base):
 
     title: Mapped[str] = mapped_column(String(250), nullable=False,)
 
-    report_type: Mapped[str] = mapped_column(String(40), nullable=False)
-
     content: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -45,6 +43,7 @@ class AgentReport(Base):
         nullable=False,
         server_default=text("'[]'::jsonb"),
     )
+    recommendations: Mapped[list] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
         nullable=False,

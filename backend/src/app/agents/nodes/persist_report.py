@@ -18,4 +18,5 @@ async def persist_report_node(state, runtime):
     return {
         "report_id": str(report_id),
         "status": "completed",
+        "result": state["final_report"]
     }

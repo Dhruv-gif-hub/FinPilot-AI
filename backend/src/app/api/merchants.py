@@ -4,12 +4,13 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.db_instance import get_db
+from ..schemas.merchant import MerchantUploadResponse
 from ..services.Merchant.merchantservice import MerchantSetupService
 
 router = APIRouter(prefix="/merchants", tags=["Merchants"],)
 
 
-@router.post("/import")
+@router.post("/import", response_model=MerchantUploadResponse)
 async def import_merchants(
     session: Annotated[AsyncSession, Depends(get_db)],
     file: Annotated[UploadFile, File(...)]):
@@ -27,7 +28,7 @@ async def import_merchants(
     )
 
 
-    return {
-        "message": "Merchant import completed.",
+    return MerchantUploadResponse(
+        message="Merchant import completed.",
         **result,
-    }
+    )

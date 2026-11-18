@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.dependencies import require_write_user
 from ..db.db_instance import get_db
+from ..schemas.response import Transaction
 from ..services.membership.user_merchant_service import MerchantMembershipService
 from ..services.transaction_service.TransactionService import import_financial_csv
 
@@ -16,7 +17,7 @@ router = APIRouter(
 
 
 
-@router.post("/{merchant_id}/transactions/import")
+@router.post("/{merchant_id}/transactions/import", response_model=Transaction)
 async def upload_transactions_csv(
     session: Annotated[AsyncSession, Depends(get_db)],
     merchant_id: Annotated[UUID, Path()],

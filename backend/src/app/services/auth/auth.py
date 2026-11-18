@@ -4,20 +4,21 @@ from typing import Annotated
 import jwt
 from fastapi import Body, Depends, HTTPException, Response, status
 from jwt.exceptions import InvalidTokenError
+from pydantic import EmailStr
 
 from app.core.redis import redis_client
 
 from ...core.config import config_value
 from ...core.security import create_access_token, create_refresh_token
 from ...schemas.auth_model import Token
-from ...schemas.login_model import LoginRequest
+from ...schemas.login_model import LoginRequest, Logout, SignupResponse
 from ...schemas.user import signupUser
 from ..User.UserService import UserService
 from .password import password_hash, verify_password
 
 hash_value = password_hash.hash(config_value.HASH_KEY) 
 
-async def authenticate_user(db, email: str, password: str):
+async def authenticate_user(db, email: EmailStr, password: str):
 
     user = await db.get_user_email(email = email)
 
@@ -73,10 +74,10 @@ async def login_access_token(
 async def signup_access_token(db : Annotated[UserService, Depends()], data : Annotated[signupUser, Body()]): 
     user = await signup_user(db, data)
 
-    return {
-        "message": "User created successfully",
-        "user_email": user.email
-    }
+    return SignupResponse(
+        message="User created successfully",
+        email= user.email
+    )
 
 def logout(response: Response, token: str, refresh_token_value: str | None = None):
     now = datetime.now(timezone.utc).timestamp()
@@ -126,7 +127,7 @@ def logout(response: Response, token: str, refresh_token_value: str | None = Non
         secure=True,
     )
 
-    return {"message": "Successfully logged out."}
+    return Logout(message="Successfully logged out.")
 
 async def refresh_token(refresh_token_value: str|None, response: Response, db : UserService):
     

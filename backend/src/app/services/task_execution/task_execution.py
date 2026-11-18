@@ -41,7 +41,7 @@ class ExecuteAgentTask:
                 "task_id": str(execution["task_id"]),
                 "run_id": str(run_id),
                 "task_type": execution["task_type"],
-                "task_description": execution["prompt"],
+                "request": execution["prompt"]
             }
 
             # 4. Execute your existing graph.

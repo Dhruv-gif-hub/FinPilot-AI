@@ -54,7 +54,7 @@ class ItemType(str, Enum):
 
 
 class CaseType(str, Enum):
-      MISSING_SETTLEMENT = "missing_settlement"
+      MISSING_SETTLEMENT = "missing_settlement_item"
       AMOUNT_MISMATCH = "amount_mismatch"
       DUPLICATE_SETTLEMENT_ITEM = "duplicate_settlement_item"
       UNMATCHED_SETTLEMENT_ITEM = "unmatched_settlement_item"

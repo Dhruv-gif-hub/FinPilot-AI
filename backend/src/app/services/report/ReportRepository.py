@@ -1,5 +1,5 @@
 from uuid import UUID
-
+from ...schemas.response import ReportResponse
 from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -82,9 +82,8 @@ class ReportRepository:
             .order_by(AgentReport.report_version.desc())
         )
 
-        result = await session.scalars(stmt)
-
-        return result.all()
+        result = (await session.scalars(stmt)).all()
+        return ReportResponse(report=result)
 
     @staticmethod
     async def _validate_task(
@@ -225,7 +224,7 @@ class ReportRepository:
                     content=report.model_dump(mode="json"),
                     evidence=report.evidence,
                     summary=report.summary,
-                    status="COMPLETED",
+                    recommendations=report.recommended_actions
                 )
             )
 
@@ -282,3 +281,20 @@ class ReportRepository:
             session,
             task_id,
         )
+
+
+    @staticmethod
+    async def get_by_task_id(
+        session,
+        *,
+        task_id: UUID
+    ):
+        stmt = (
+            select(AgentReport)
+            .where(
+                AgentReport.task_id == task_id
+            )
+        )
+        result = await session.scalars(stmt)
+        
+        return result.first()

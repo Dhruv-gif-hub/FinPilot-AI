@@ -1,9 +1,11 @@
 from datetime import datetime
 from uuid import UUID
-from ..schemas.util import Role
+
 from pydantic import EmailStr
 from sqlalchemy import Boolean, DateTime, MetaData, String, Uuid, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from ..schemas.util import Role
 
 
 class Base(DeclarativeBase):
@@ -24,7 +26,7 @@ class User(Base):
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True,  server_default=func.gen_random_uuid())
     email: Mapped[EmailStr] = mapped_column(String(255), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Role] = mapped_column(String(50), nullable=False, default=Role.ANALYST)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),

@@ -9,7 +9,9 @@ class FinPilotState(TypedDict, total=False):
     # Request and trusted execution context
     task_id: str
     thread_id: str
+    run_id: str
     user_id: str
+    task_type: str
     merchant_id: str
     user_preferance: list[dict]
     request: Annotated[list[str], operator.add]

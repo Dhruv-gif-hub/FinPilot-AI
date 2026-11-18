@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CHAR, DateTime, String, Uuid, func, UniqueConstraint
+from sqlalchemy import CHAR, DateTime, String, UniqueConstraint, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .user import Base

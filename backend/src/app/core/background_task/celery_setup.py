@@ -23,7 +23,6 @@ celery = Celery(
 )
 
 celery.conf.update(
-
     task_serializer="json", # this specifies that tasks will be serialized in JSON format
 
     result_serializer="json", # this specifies that results will be serialized in JSON format
@@ -39,5 +38,14 @@ celery.conf.update(
     broker_connection_retry_on_startup=True, # this specifies that Celery will retry the broker connection on startup if it fails
 
     task_track_started=True, # this specifies that Celery will track the start of tasks
-)
+
+    beat_schedule={
+        "dispatch-outbox-events": {
+            "task": (
+                "app.workers.outbox_dispatcher.dispatch_outbox"
+            ),
+            "schedule": 5.0,
+        },
+    },
+    )
 
