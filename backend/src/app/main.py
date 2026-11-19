@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.store.postgres import AsyncPostgresStore
 
@@ -46,7 +47,17 @@ def create_app(lifespan) -> FastAPI:
     )
 
     app.add_middleware(RequestLoggingMiddleware)
-
+    
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.include_router(auth.router, tags=["Auth"])
     app.include_router(document.router, tags=["Document RAG"])
     app.include_router(agent_tasks.router, tags=["Agent Tasks"])
